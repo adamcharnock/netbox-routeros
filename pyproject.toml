@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "netbox-routeros"
+description = "Configure Mikrotik RouterOS devices using Netbox"
+version = "0.1.0"
+authors = ["Adam Charnock <adam.charnock@gardunha.net>"]
+repository = "https://github.com/gardunha/netbox-routeros"
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.dephell.main]
+    from = {format = "poetry", path = "pyproject.toml"}
+    envs = ["main"]
+    to = {format = "setuppy", path = "setup.py"}
