@@ -1,0 +1,76 @@
+{% extends 'routeros/bases/object_edit.html' %}
+{% load form_helpers %}
+
+{% block header %}
+    <div class="row noprint">
+        <div class="col-sm-8 col-md-9">
+            <ol class="breadcrumb">
+                <li><a href="{% url 'plugins:netbox_routeros:configurationtemplate_list' %}">Configuration templates</a></li>
+                <li><a href="{% url 'plugins:netbox_routeros:configurationtemplate' obj.pk %}">{{ obj }}</a></li>
+                <li>Edit</li>
+            </ol>
+        </div>
+    </div>
+{% endblock %}
+
+{% block form %}
+    <div class="row">
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-heading"><strong>Configuration Template</strong></div>
+                <div class="panel-body">
+                    {% render_field form.name %}
+                    {% render_field form.slug %}
+                </div>
+            </div>
+
+            <div class="panel panel-default">
+                <div class="panel-heading"><strong>Tenancy</strong></div>
+                <div class="panel-body">
+                    {% render_field form.tenant_group %}
+                    {% render_field form.tenant %}
+                </div>
+            </div>
+
+
+            <div class="panel panel-default">
+                <div class="panel-heading"><strong>Tags</strong></div>
+                <div class="panel-body">
+                    {% render_field form.tags %}
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading"><strong>Template content</strong></div>
+                <div class="panel-body">
+                    {% render_field form.content %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-heading"><strong>Preview configuration</strong></div>
+                <div class="panel-body">
+                    {% render_field form.preview_for_device %}
+                    {% if config_preview %}
+                        <div class="alert alert-danger" role="alert">
+                            <strong>You have unsaved changes.</strong> Ensure you save your changes once you
+                            are satisfied with your preview.
+                        </div>
+                        <pre>{{ config_preview }}</pre>
+                    {% endif %}
+                    <button type="submit" name="_preview" value="1" class="btn btn-default btn-block">Show configuration preview</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+
+{% block buttons %}
+<div class="row">
+    <div class="col-md-6">
+        {{ block.super }}
+    </div>
+</div>
+{% endblock %}
