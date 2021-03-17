@@ -3,12 +3,22 @@ from django.views import View
 
 from extras.views import ObjectChangeLogView
 from . import views
-from .models import ConfigurationTemplate
+from .models import ConfigurationTemplate, ConfiguredDevice
 
 app_name = 'netbox_routeros'
 urlpatterns = [
 
-    # Regions
+    # Configured devices
+    path('configured-device/', views.ConfiguredDeviceListView.as_view(), name='configureddevice_list'),
+    path('configured-device/add/', views.ConfiguredDeviceEditView.as_view(), name='configureddevice_add'),
+    path('configured-device/import/', View.as_view(), name='configureddevice_import'),
+    path('configured-device/delete/', View.as_view(), name='configureddevice_bulk_delete'),
+    path('configured-device/<int:pk>/', views.ConfiguredDeviceView.as_view(), name='configureddevice'),
+    path('configured-device/<int:pk>/edit/', views.ConfiguredDeviceEditView.as_view(), name='configureddevice_edit'),
+    path('configured-device/<int:pk>/delete/', View.as_view(), name='configureddevice_delete'),
+    path('configured-device/<int:pk>/changelog/', ObjectChangeLogView.as_view(), name='configureddevice_changelog', kwargs={'model': ConfiguredDevice}),
+
+    # Configuration templates
     path('configuration-templates/', views.ConfigurationTemplateListView.as_view(), name='configurationtemplate_list'),
     path('configuration-templates/add/', views.ConfigurationTemplateEditView.as_view(), name='configurationtemplate_add'),
     path('configuration-templates/import/', View.as_view(), name='configurationtemplate_import'),

@@ -1,12 +1,13 @@
-from ipaddress import collapse_addresses, IPv4Interface, IPv6Address, IPv6Network, IPv4Network, ip_network
-from typing import Union
+from functools import partial
+from ipaddress import collapse_addresses, IPv4Interface, IPv6Address, IPv6Network, IPv4Network, ip_network, ip_interface
+from typing import Union, List, Optional
 
 import django.apps
 from django.contrib.postgres.fields import ArrayField
 from django.db.models import Func
 from django.db.models.functions import Cast
 from jinja2 import Environment, DictLoader
-from netaddr import IPNetwork
+import netaddr
 
 from dcim.models import Device, Interface
 from ipam.fields import IPAddressField
@@ -33,17 +34,23 @@ def render_ros_config(device: Device, template_name: str, template_content: str 
 
     return template.render(
         device=device,
-        ip_addresses=_context_ip_addresses(device),
         vlans=_context_vlans(device),
-        prefixes=_context_prefixes(device),
-        **get_template_functions(),
-        **models
+        **_context_ip_addresses(device),
+        **_context_prefixes(device),
+        **get_template_functions(device),
+        **models,
     )
 
 
 def _context_ip_addresses(device: Device):
     # TODO: Test
-    return IPAddress.objects.filter(interface__device=device)
+    addresses = IPAddress.objects.filter(interface__device=device)
+    return dict(
+        ip_addresses=addresses,
+        ip_addresses_v4=addresses.filter(address__family=4),
+        ip_addresses_v6=addresses.filter(address__family=6),
+
+    )
 
 
 def _context_vlans(device: Device):
@@ -53,7 +60,12 @@ def _context_vlans(device: Device):
 
 def _context_prefixes(device: Device):
     # TODO: Test
-    return Prefix.objects.filter(prefix__net_contains=_any_address(device))
+    prefixes = Prefix.objects.filter(prefix__net_contains=_any_address(device))
+    return dict(
+        prefixes=prefixes,
+        prefixes_v4=prefixes.filter(prefix__family=4),
+        prefixes_v6=prefixes.filter(prefix__family=6),
+    )
 
 
 def _any_address(device: Device):
@@ -63,16 +75,23 @@ def _any_address(device: Device):
     return Any(addresses)
 
 
-def get_template_functions():
+def get_template_functions(device):
     return dict(
         get_loopback=get_loopback,
+        get_prefix=get_prefix,
         combine_prefixes=combine_prefixes,
-        get_interface=get_interface,
+        get_interface=partial(get_interface, device),
+        orm_or=orm_or,
     )
 
 
-def get_loopback(device: Device) -> IPAddress:
-    loopback = IPAddress.objects.filter(interface__device=device, role="loopback").first()
+def get_loopback(device: Device, number=1) -> Optional[IPAddress]:
+    qs = IPAddress.objects.filter(interface__device=device, role="loopback").order_by('address')
+    try:
+        loopback = qs[number - 1:number].get()
+    except IPAddress.DoesNotExist:
+        return None
+
     if loopback:
         return loopback.address.ip
 
@@ -89,21 +108,33 @@ def combine_prefixes(prefixes, only_combined=False):
         out_prefixes = [p for p in out_prefixes if p not in in_prefixes]
 
     # Ensure we use the netaddr IPAddress, rather than the ipaddress.IPvXNetwork
-    return [IPNetwork(str(p)) for p in out_prefixes]
+    return [netaddr.IPNetwork(str(p)) for p in out_prefixes]
 
 
-def get_interface(device: Device, obj: Union[str, IPv4Interface, IPv4Network, IPv6Address, IPv6Network, Prefix, VLAN]):
+def get_interface(
+        device: Device,
+        obj: Union[str, IPv4Interface, IPv4Network, IPv6Address, IPv6Network, netaddr.IPNetwork, netaddr.IPAddress, IPAddress, Prefix, VLAN],
+        include_vlans=True,
+    ):
     if isinstance(obj, Prefix):
         obj = obj.prefix
+    elif isinstance(obj, IPAddress):
+        obj = obj.address
 
-    if isinstance(obj, str):
-        obj = ip_network(obj)
+    if isinstance(obj, (str, netaddr.IPNetwork, netaddr.IPAddress)):
+        obj = ip_interface(str(obj))
 
     if isinstance(obj, VLAN):
         vlan_filter = Q(untagged_vlan=obj) | Q(tagged_vlans=obj)
         return device.interfaces.filter(vlan_filter).first()
 
-    if obj.max_prefixlen == obj.prefixlen:
+    if include_vlans:
+        # Get the vlan interface for this IP if the router has one
+        vlan_interface = VLAN.objects.filter(interfaces_as_tagged__device=device, prefixes__prefix__net_contains_or_equals=str(obj)).last()
+        if vlan_interface:
+            return vlan_interface
+
+    if obj.network.max_prefixlen == obj.network.prefixlen:
         # A /32 or /128, so query based on the IP host
         query = dict(ip_addresses__address__net_host=str(obj))
     else:
@@ -112,3 +143,14 @@ def get_interface(device: Device, obj: Union[str, IPv4Interface, IPv4Network, IP
 
     # Get the smallest matching subnet
     return device.interfaces.filter(**query).order_by('ip_addresses__address__net_mask_length').last()
+
+
+def get_prefix(ip_address):
+    return Prefix.objects.filter(prefix__net_contained_or_equal=str(ip_address)).order_by('prefix__net_mask_length').last()
+
+
+def orm_or(**filters):
+    query = Q()
+    for k, v in filters.items():
+        query |= Q(**{k: v})
+    return query

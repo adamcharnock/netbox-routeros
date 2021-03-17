@@ -1,0 +1,50 @@
+{% extends 'routeros/bases/object_edit.html' %}
+{% load form_helpers %}
+
+{% block header %}
+    <div class="row noprint">
+        <div class="col-sm-8 col-md-9">
+            <ol class="breadcrumb">
+                <li><a href="{% url 'plugins:netbox_routeros:configureddevice_list' %}">Configured devices</a></li>
+                {% if obj.pk %}
+                    <li><a href="{% url 'plugins:netbox_routeros:configureddevice' obj.pk %}">{{ obj }}</a></li>
+                    <li>Edit</li>
+                {% else %}
+                    <li>Add</li>
+                {% endif %}
+            </ol>
+        </div>
+    </div>
+{% endblock %}
+
+{% block form %}
+    <div class="row">
+        <div class="col-md-6 col-md-offset-3">
+            <div class="panel panel-default">
+                <div class="panel-heading"><strong>Configured device</strong></div>
+                <div class="panel-body">
+                    {% render_field form.device %}
+                    {% render_field form.configuration_template %}
+                </div>
+            </div>
+
+            <div class="panel panel-default">
+                <div class="panel-heading"><strong>Tenancy</strong></div>
+                <div class="panel-body">
+                    {% render_field form.tenant_group %}
+                    {% render_field form.tenant %}
+                </div>
+            </div>
+
+        </div>
+    </div>
+{% endblock %}
+
+
+{% block buttons %}
+<div class="row">
+    <div class="col-md-6">
+        {{ block.super }}
+    </div>
+</div>
+{% endblock %}
