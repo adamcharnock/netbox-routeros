@@ -1,6 +1,7 @@
 CONFIGURED_DEVICE_LINK = """
 <a href="{% url 'plugins:netbox_routeros:configureddevice' pk=record.pk %}">
     {{ record.device.name }}
+    {% if record.problems %}<span class="badge" style="background-color: #f0ad4e;">problems</span>{% endif %}
 </a>
 """
 

@@ -17,6 +17,7 @@ urlpatterns = [
     path('configured-device/<int:pk>/edit/', views.ConfiguredDeviceEditView.as_view(), name='configureddevice_edit'),
     path('configured-device/<int:pk>/delete/', View.as_view(), name='configureddevice_delete'),
     path('configured-device/<int:pk>/changelog/', ObjectChangeLogView.as_view(), name='configureddevice_changelog', kwargs={'model': ConfiguredDevice}),
+    path('configured-device/pull/', views.PullConfigView.as_view(), name='configureddevice_pull_config'),
 
     # Configuration templates
     path('configuration-templates/', views.ConfigurationTemplateListView.as_view(), name='configurationtemplate_list'),

@@ -14,6 +14,19 @@
             </ol>
         </div>
         <div class="col-sm-4 col-md-3 text-right">
+            {% if perms.routeros.apply_configureddevice %}
+                {% if not record.problems %}
+                <div class="btn-group">
+                    <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <span class="mdi mdi-upload" aria-hidden="true"></span> Push config <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a href="#"><span class="mdi mdi-eye" aria-hidden="true"></span> Preview & push</a></li>
+                        <li><a href="#"><span class="mdi mdi-upload" aria-hidden="true"></span> Push now</a></li>
+                    </ul>
+                </div>
+                {% endif %}
+            {% endif %}
             {% if perms.routeros.change_configureddevice %}
                 <a href="{% url "plugins:netbox_routeros:configureddevice_edit" object.pk %}?return_url={{ request.path }}" class="btn btn-warning">
                     <span class="mdi mdi-pencil" aria-hidden="true"></span> Edit
@@ -32,9 +45,29 @@
                 <div role="tabpanel" class="tab-pane active" id="details">
                     <div class="row">
                         <div class="col-md-4">
+                            {% if object.problems %}
+                            <div class="panel panel-warning">
+                                <div class="panel-heading">
+                                    <strong>Potential problems</strong>
+                                </div>
+                                <div class="panel-body">
+                                    <p>
+                                        Some problems were detected with this device or your configuration.
+                                        You will need to correct them before you can pull
+                                        from or push to the device.
+                                    </p>
+                                    <ul>
+                                    {% for probem in object.problems %}
+                                        <li>{{ probem }}</li>
+                                    {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                            {% endif %}
+
                             <div class="panel panel-default">
                                 <div class="panel-heading">
-                                    <strong>Configuration device</strong>
+                                    <strong>Device & configuration template</strong>
                                 </div>
                                 <table class="table table-hover panel-body attr-table">
                                     <tr>
@@ -83,39 +116,60 @@
                             {% plugin_left_page object %}
                         </div>
                         <div class="col-md-8">
-                            <div class="panel panel-default">
-                                <div class="panel-heading">
-                                    <strong>Rendered template</strong>
-                                </div>
-                                {{ config_preview|safe }}
-                            </div>
 
-                            <div class="panel panel-default">
-                                <div class="panel-heading">
-                                    <strong>Context: values</strong>
-                                </div>
-                                <div class="panel-body rendered-markdown">
-                                    <pre>{{ context_values }}</pre>
-                                </div>
-                            </div>
+                              <div class="panel panel-default">
+                                  <div class="panel-heading">
+                                      <strong>Configuration</strong>
+                                  </div>
+                                  <div class="panel-body rendered-markdown">
+                                      <ul class="nav nav-tabs" role="tablist">
+                                          <li role="presentation" class="active"><a href="#tab-generated" aria-controls="tab-generated" role="tab" data-toggle="tab">Generated</a></li>
+                                          <li role="presentation"><a href="#tab-current" aria-controls="tab-current" role="tab" data-toggle="tab">Current</a></li>
+                                          <li role="presentation"><a href="#tab-diff" aria-controls="tab-diff" role="tab" data-toggle="tab">Diff to apply</a></li>
+                                      </ul>
 
-                            <div class="panel panel-default">
-                                <div class="panel-heading">
-                                    <strong>Context: functions</strong>
-                                </div>
-                                <div class="panel-body rendered-markdown">
-                                    <pre>{{ context_functions }}</pre>
-                                </div>
-                            </div>
+                                      <!-- Tab panes -->
+                                      <div class="tab-content">
+                                          <div role="tabpanel" class="tab-pane active" id="tab-generated">
+                                              {{ config_generated|safe }}
+                                          </div>
+                                          <div role="tabpanel" class="tab-pane" id="tab-current">
+                                              {{ config_latest|safe }}
+                                          </div>
+                                          <div role="tabpanel" class="tab-pane" id="tab-diff">
+                                              {{ config_diff|safe }}
+                                          </div>
+                                      </div>
+                                  </div>
+                              </div>
 
-                            <div class="panel panel-default">
-                                <div class="panel-heading">
-                                    <strong>Context: models</strong>
-                                </div>
-                                <div class="panel-body rendered-markdown">
-                                    <pre>{{ context_models }}</pre>
-                                </div>
-                            </div>
+
+                              <div class="panel panel-default">
+                                  <div class="panel-heading">
+                                      <strong>Context: values</strong>
+                                  </div>
+                                  <div class="panel-body rendered-markdown">
+                                      <pre>{{ context_values }}</pre>
+                                  </div>
+                              </div>
+
+                              <div class="panel panel-default">
+                                  <div class="panel-heading">
+                                      <strong>Context: functions</strong>
+                                  </div>
+                                  <div class="panel-body rendered-markdown">
+                                      <pre>{{ context_functions }}</pre>
+                                  </div>
+                              </div>
+
+                              <div class="panel panel-default">
+                                  <div class="panel-heading">
+                                      <strong>Context: models</strong>
+                                  </div>
+                                  <div class="panel-body rendered-markdown">
+                                      <pre>{{ context_models }}</pre>
+                                  </div>
+                              </div>
                         </div>
                     </div>
                     <div class="row">

@@ -5,3 +5,12 @@
 {% block buttons %}
     {% add_button "plugins:netbox_routeros:configureddevice_add" %}
 {% endblock %}
+{% block bulk_buttons %}
+    {{ block.super }}
+    <button type="submit" name="_edit" formaction="{% url 'plugins:netbox_routeros:configureddevice_pull_config' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" class="btn btn-success btn-sm">
+        <span class="mdi mdi-download" aria-hidden="true"></span> Fetch config
+    </button>
+    <button type="submit" name="_edit" formaction="xxx{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" class="btn btn-warning btn-sm">
+        <span class="mdi mdi-upload" aria-hidden="true"></span> Push config
+    </button>
+{% endblock %}

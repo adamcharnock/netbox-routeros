@@ -1,7 +1,13 @@
+import napalm
 from django.db import models
+from django.utils.functional import cached_property
+from django.utils.timezone import now
+from napalm.base import ModuleImportError
 from taggit.managers import TaggableManager
 
 from extras.models import ChangeLoggedModel, TaggedItem
+from netbox.api.exceptions import ServiceUnavailable
+from netbox_routeros.utilities.napalm import get_napalm_driver
 from utilities.querysets import RestrictedQuerySet
 
 
@@ -54,6 +60,43 @@ class ConfiguredDevice(ChangeLoggedModel):
             return self.device.name
         else:
             return "New configured device"
+
+    @cached_property
+    def problems(self):
+        """There are a bunch of things that may cause issues. Let's check for them
+        proactively and let the user know"""
+        problems = []
+        if not self.device.primary_ip:
+            problems.append("Device has no primary IP set. Set a primary IP to enable connecting to this device")
+
+        # Check device has a platform
+        if not self.device.platform:
+            problems.append("No platform has been configured for this device")
+
+        # Check that NAPALM is installed
+        try:
+            import napalm
+            from napalm.base.exceptions import ModuleImportError
+        except ModuleNotFoundError as e:
+            if getattr(e, 'name') == 'napalm':
+                problems.append("NAPALM is not installed. Please install the napalm package.")
+            return problems
+
+        # Validate the configured driver
+        try:
+            napalm.get_network_driver(self.device.platform.napalm_driver)
+        except ModuleImportError:
+            problems.append("NAPALM driver for platform {self.device.platform} not found: {self.device.platform.napalm_driver}.")
+
+        return problems
+
+    def fetch_config(self):
+        # Validate the configured driver
+        driver = get_napalm_driver(self.device)
+        config = driver.get_config(retrieve='running', full=True, sanitized=False)['running']
+        self.last_config_fetched = config
+        self.last_config_fetched_at = now()
+        self.save()
 
 
 class ConfigurationTemplate(ChangeLoggedModel):
