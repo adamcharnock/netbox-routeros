@@ -21,6 +21,8 @@
             {% endif %}
         </div>
     </div>
+
+    <link rel="stylesheet" href="{% static 'netbox_routeros/ros-syntax.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -29,7 +31,7 @@
             <div class="tab-content">
                 <div role="tabpanel" class="tab-pane active" id="details">
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="panel panel-default">
                                 <div class="panel-heading">
                                     <strong>Configuration device</strong>
@@ -64,15 +66,54 @@
                             </div>
 
                             {% include 'extras/inc/tags_panel.html' with tags=object.tags.all url='dcim:configureddevice_list' %}
+
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    <strong>Extra configuration</strong>
+                                </div>
+                                <div class="panel-body rendered-markdown">
+                                    {% if object.extra_configuration %}
+                                        <pre>{{ object.extra_configuration }}</pre>
+                                    {% else %}
+                                        <span class="text-muted">No extra configuration set</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+
                             {% plugin_left_page object %}
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-8">
                             <div class="panel panel-default">
                                 <div class="panel-heading">
                                     <strong>Rendered template</strong>
                                 </div>
+                                {{ config_preview|safe }}
+                            </div>
+
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    <strong>Context: values</strong>
+                                </div>
                                 <div class="panel-body rendered-markdown">
-                                    <pre>{{ config_preview }}</pre>
+                                    <pre>{{ context_values }}</pre>
+                                </div>
+                            </div>
+
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    <strong>Context: functions</strong>
+                                </div>
+                                <div class="panel-body rendered-markdown">
+                                    <pre>{{ context_functions }}</pre>
+                                </div>
+                            </div>
+
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    <strong>Context: models</strong>
+                                </div>
+                                <div class="panel-body rendered-markdown">
+                                    <pre>{{ context_models }}</pre>
                                 </div>
                             </div>
                         </div>

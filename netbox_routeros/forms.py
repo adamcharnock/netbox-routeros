@@ -26,8 +26,8 @@ class ConfiguredDeviceForm(BootstrapMixin, TenancyForm, forms.ModelForm):
         fields = [
             'device',
             'configuration_template',
+            'extra_configuration',
         ]
-
 
 
 class ConfigurationTemplateForm(BootstrapMixin, TenancyForm, forms.ModelForm):

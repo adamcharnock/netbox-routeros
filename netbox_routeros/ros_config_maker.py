@@ -6,33 +6,66 @@ import django.apps
 from django.contrib.postgres.fields import ArrayField
 from django.db.models import Func
 from django.db.models.functions import Cast
-from jinja2 import Environment, DictLoader
+from jinja2 import Environment, BaseLoader, TemplateNotFound
 import netaddr
 
 from dcim.models import Device, Interface
 from ipam.fields import IPAddressField
 from ipam.models import IPAddress, VLAN, Q, Prefix
 from netbox_routeros.models import ConfigurationTemplate
+from utilities.utils import deepmerge
 
 
 class Any(Func):
     function = 'ANY'
 
 
-def render_ros_config(device: Device, template_name: str, template_content: str = None):
-    templates = dict(ConfigurationTemplate.objects.all().values_list('slug', 'content'))
-    if template_content:
-        templates[template_name] = template_content
+class RosTemplateLoader(BaseLoader):
 
-    # Make all models available for custom querying
-    models = {m._meta.object_name: m for m in django.apps.apps.get_models()}
+    def __init__(self, overrides: dict=None):
+        self.overrides = overrides or {}
+
+    def get_source(self, environment, template):
+        # TODO: Does not support tenants
+        if template in self.overrides:
+            return self.overrides[template], template, lambda: content == self.overrides[template]
+
+        try:
+            content = ConfigurationTemplate.objects.get(slug=template).content
+        except ConfigurationTemplate.DoesNotExist:
+            raise TemplateNotFound(template)
+        else:
+            return content, template, lambda: content == ConfigurationTemplate.objects.get(slug=template).content
+
+    def list_templates(self):
+        return ConfigurationTemplate.objects.all().values_list('slug', flat=True)
+
+
+def render_ros_config(device: Device, template_name: str, template_content: str = None, extra_config: str=""):
+    overrides = {}
+    if template_name and template_content:
+        overrides[template_name] = template_content
 
     env = Environment(
-        loader=DictLoader(templates),
+        loader=RosTemplateLoader(overrides),
     )
     template = env.get_template(template_name)
 
-    return template.render(
+    config = template.render(
+        **make_ros_config_context(device)
+    )
+
+    if extra_config:
+        config += f"\n{extra_config}"
+
+    return config
+
+
+def make_ros_config_context(device: Device):
+    # Make all models available for custom querying
+    models = {m._meta.object_name: m for m in django.apps.apps.get_models()}
+
+    context = dict(
         device=device,
         vlans=_context_vlans(device),
         **_context_ip_addresses(device),
@@ -40,6 +73,8 @@ def render_ros_config(device: Device, template_name: str, template_content: str 
         **get_template_functions(device),
         **models,
     )
+    return dict(deepmerge(context, device.get_config_context()))
+
 
 
 def _context_ip_addresses(device: Device):

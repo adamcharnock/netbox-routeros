@@ -1,3 +1,7 @@
+import traceback
+from inspect import isclass
+
+from django.db.models import Model
 from django.shortcuts import render
 from jinja2 import TemplateError
 
@@ -5,11 +9,12 @@ from dcim.models import Device
 from gn.gnms.ros_conf.ros_parser import RouterOSConfig
 from netbox.views import generic
 from netbox_routeros.models import ConfigurationTemplate, ConfiguredDevice
+from pprint import pformat
 
 from . import filters
 from . import forms
 from . import tables
-from .ros_config_maker import render_ros_config
+from .ros_config_maker import render_ros_config, make_ros_config_context
 
 
 class ConfiguredDeviceListView(generic.ObjectListView):
@@ -34,8 +39,16 @@ class ConfiguredDeviceView(generic.ObjectView):
     template_name = 'routeros/configured_device.html'
 
     def get_extra_context(self, request, instance: ConfiguredDevice):
+        context = make_ros_config_context(device=instance.device)
+        context_models = {k: v for k, v in context.items() if isclass(v) and issubclass(v, Model)}
+        context_functions = {k: v for k, v in context.items() if callable(v) and k not in context_models}
+        context_values = {k: v for k, v in context.items() if k not in context_models and k not in context_functions}
+
         return {
-            'config_preview': make_config_for_display(device=instance.device, template_name=instance.configuration_template.slug, prettify=True)
+            'config_preview': make_config_for_display(device=instance.device, template_name=instance.configuration_template.slug, extra_config=instance.extra_configuration, prettify=True),
+            'context_values': pformat(context_values, sort_dicts=True),
+            'context_functions': pformat(context_functions, sort_dicts=True),
+            'context_models': pformat(context_models, sort_dicts=True),
         }
 
 
@@ -88,20 +101,17 @@ class ConfigurationTemplateView(generic.ObjectView):
     template_name = 'routeros/configuration_template.html'
 
 
-def make_config_for_display(device: Device, template_name: str, template_content: str="", prettify=False):
+def make_config_for_display(device: Device, template_name: str, template_content: str="", extra_config: str="", prettify=False):
     """Render a config for display to a user
 
     Adds some niceties around error rendering
     """
     try:
-        config = render_ros_config(device, template_name, template_content)
+        config = render_ros_config(device, template_name, template_content, extra_config)
     except TemplateError as e:
-        if hasattr(e, 'lineno'):
-            config = f"{e.__class__.__name__} on line {e.lineno}: {e}"
-        else:
-            config = f"{e.__class__.__name__}: {e}"
+        config = traceback.format_exc()
     else:
         if prettify:
-            config = str(RouterOSConfig.parse(config))
+            config = RouterOSConfig.parse(config).__html__()
 
     return config

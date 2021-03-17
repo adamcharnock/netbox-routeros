@@ -16,6 +16,12 @@ class ConfiguredDevice(ChangeLoggedModel):
         on_delete=models.PROTECT,
         related_name='configured_devices',
     )
+    extra_configuration = models.TextField(
+        default="",
+        blank=True,
+        help_text="Extra configuration to include in addition to the config template"
+    )
+
     tenant = models.ForeignKey(
         to='tenancy.Tenant',
         on_delete=models.PROTECT,

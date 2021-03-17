@@ -1,0 +1,38 @@
+/*
+#e63946
+#f1faee
+#a8dadc
+#457b9d
+#1d3557
+*/
+
+.ros {
+    display: block;
+    font-family: monospace;
+    background-color: #f1faee;
+    padding: 2rem;
+}
+/*Section path*/
+.ros-p {
+    font-weight: bold;
+    color: #1d3557;
+}
+.ros-s > .ros-e > .ros-c {
+    font-weight: bold;
+}
+
+.ros-c {
+    color: #e63946;
+}
+.ros-k {
+    color: #457b9d;
+}
+.ros-nat {
+    border-bottom: 1px dashed rgba(69, 123, 157, 0.5);
+}
+.ros-fc {
+    opacity: 0.7;
+}
+.ros-v {
+    color: #1d3557;
+}
