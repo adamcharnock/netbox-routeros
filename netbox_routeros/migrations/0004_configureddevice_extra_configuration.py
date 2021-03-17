@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('netbox_routeros', '0003_auto_20210317_1230'),
+        ("netbox_routeros", "0003_auto_20210317_1230"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='configureddevice',
-            name='extra_configuration',
-            field=models.TextField(blank=True, default=''),
+            model_name="configureddevice",
+            name="extra_configuration",
+            field=models.TextField(blank=True, default=""),
         ),
     ]

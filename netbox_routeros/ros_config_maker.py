@@ -1,5 +1,13 @@
 from functools import partial
-from ipaddress import collapse_addresses, IPv4Interface, IPv6Address, IPv6Network, IPv4Network, ip_network, ip_interface
+from ipaddress import (
+    collapse_addresses,
+    IPv4Interface,
+    IPv6Address,
+    IPv6Network,
+    IPv4Network,
+    ip_network,
+    ip_interface,
+)
 from typing import Union, List, Optional
 
 import django.apps
@@ -17,43 +25,52 @@ from utilities.utils import deepmerge
 
 
 class Any(Func):
-    function = 'ANY'
+    function = "ANY"
 
 
 class RosTemplateLoader(BaseLoader):
-
-    def __init__(self, overrides: dict=None):
+    def __init__(self, overrides: dict = None):
         self.overrides = overrides or {}
 
     def get_source(self, environment, template):
         # TODO: Does not support tenants
         if template in self.overrides:
-            return self.overrides[template], template, lambda: content == self.overrides[template]
+            return (
+                self.overrides[template],
+                template,
+                lambda: content == self.overrides[template],
+            )
 
         try:
             content = ConfigurationTemplate.objects.get(slug=template).content
         except ConfigurationTemplate.DoesNotExist:
             raise TemplateNotFound(template)
         else:
-            return content, template, lambda: content == ConfigurationTemplate.objects.get(slug=template).content
+            return (
+                content,
+                template,
+                lambda: content
+                == ConfigurationTemplate.objects.get(slug=template).content,
+            )
 
     def list_templates(self):
-        return ConfigurationTemplate.objects.all().values_list('slug', flat=True)
+        return ConfigurationTemplate.objects.all().values_list("slug", flat=True)
 
 
-def render_ros_config(device: Device, template_name: str, template_content: str = None, extra_config: str=""):
+def render_ros_config(
+    device: Device,
+    template_name: str,
+    template_content: str = None,
+    extra_config: str = "",
+):
     overrides = {}
     if template_name and template_content:
         overrides[template_name] = template_content
 
-    env = Environment(
-        loader=RosTemplateLoader(overrides),
-    )
+    env = Environment(loader=RosTemplateLoader(overrides),)
     template = env.get_template(template_name)
 
-    config = template.render(
-        **make_ros_config_context(device)
-    )
+    config = template.render(**make_ros_config_context(device))
 
     if extra_config:
         config += f"\n{extra_config}"
@@ -76,7 +93,6 @@ def make_ros_config_context(device: Device):
     return dict(deepmerge(context, device.get_config_context()))
 
 
-
 def _context_ip_addresses(device: Device):
     # TODO: Test
     addresses = IPAddress.objects.filter(interface__device=device)
@@ -84,7 +100,6 @@ def _context_ip_addresses(device: Device):
         ip_addresses=addresses,
         ip_addresses_v4=addresses.filter(address__family=4),
         ip_addresses_v6=addresses.filter(address__family=6),
-
     )
 
 
@@ -105,7 +120,12 @@ def _context_prefixes(device: Device):
 
 def _any_address(device: Device):
     """Utility for querying against any device address"""
-    addresses = [str(ip.ip) for ip in IPAddress.objects.filter(interface__device=device).values_list('address', flat=True)]
+    addresses = [
+        str(ip.ip)
+        for ip in IPAddress.objects.filter(interface__device=device).values_list(
+            "address", flat=True
+        )
+    ]
     addresses = Cast(addresses, output_field=ArrayField(IPAddressField()))
     return Any(addresses)
 
@@ -121,9 +141,11 @@ def get_template_functions(device):
 
 
 def get_loopback(device: Device, number=1) -> Optional[IPAddress]:
-    qs = IPAddress.objects.filter(interface__device=device, role="loopback").order_by('address')
+    qs = IPAddress.objects.filter(interface__device=device, role="loopback").order_by(
+        "address"
+    )
     try:
-        loopback = qs[number - 1:number].get()
+        loopback = qs[number - 1 : number].get()
     except IPAddress.DoesNotExist:
         return None
 
@@ -132,12 +154,12 @@ def get_loopback(device: Device, number=1) -> Optional[IPAddress]:
 
 
 def combine_prefixes(prefixes, only_combined=False):
-    in_prefixes = [ip_network(p.prefix if isinstance(p, Prefix) else p) for p in prefixes]
+    in_prefixes = [
+        ip_network(p.prefix if isinstance(p, Prefix) else p) for p in prefixes
+    ]
     out_prefixes = list(
         collapse_addresses([p for p in in_prefixes if p.version == 4])
-    ) + list(
-        collapse_addresses([p for p in in_prefixes if p.version == 6])
-    )
+    ) + list(collapse_addresses([p for p in in_prefixes if p.version == 6]))
 
     if only_combined:
         out_prefixes = [p for p in out_prefixes if p not in in_prefixes]
@@ -147,10 +169,21 @@ def combine_prefixes(prefixes, only_combined=False):
 
 
 def get_interface(
-        device: Device,
-        obj: Union[str, IPv4Interface, IPv4Network, IPv6Address, IPv6Network, netaddr.IPNetwork, netaddr.IPAddress, IPAddress, Prefix, VLAN],
-        include_vlans=True,
-    ):
+    device: Device,
+    obj: Union[
+        str,
+        IPv4Interface,
+        IPv4Network,
+        IPv6Address,
+        IPv6Network,
+        netaddr.IPNetwork,
+        netaddr.IPAddress,
+        IPAddress,
+        Prefix,
+        VLAN,
+    ],
+    include_vlans=True,
+):
     if isinstance(obj, Prefix):
         obj = obj.prefix
     elif isinstance(obj, IPAddress):
@@ -165,7 +198,10 @@ def get_interface(
 
     if include_vlans:
         # Get the vlan interface for this IP if the router has one
-        vlan_interface = VLAN.objects.filter(interfaces_as_tagged__device=device, prefixes__prefix__net_contains_or_equals=str(obj)).last()
+        vlan_interface = VLAN.objects.filter(
+            interfaces_as_tagged__device=device,
+            prefixes__prefix__net_contains_or_equals=str(obj),
+        ).last()
         if vlan_interface:
             return vlan_interface
 
@@ -177,11 +213,19 @@ def get_interface(
         query = dict(ip_addresses__address__net_contained_or_equal=str(obj))
 
     # Get the smallest matching subnet
-    return device.interfaces.filter(**query).order_by('ip_addresses__address__net_mask_length').last()
+    return (
+        device.interfaces.filter(**query)
+        .order_by("ip_addresses__address__net_mask_length")
+        .last()
+    )
 
 
 def get_prefix(ip_address):
-    return Prefix.objects.filter(prefix__net_contained_or_equal=str(ip_address)).order_by('prefix__net_mask_length').last()
+    return (
+        Prefix.objects.filter(prefix__net_contained_or_equal=str(ip_address))
+        .order_by("prefix__net_mask_length")
+        .last()
+    )
 
 
 def orm_or(**filters):

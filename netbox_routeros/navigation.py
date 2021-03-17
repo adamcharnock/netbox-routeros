@@ -3,17 +3,27 @@ from utilities.choices import ButtonColorChoices
 
 menu_items = (
     PluginMenuItem(
-        link='plugins:netbox_routeros:configureddevice_list',
-        link_text='Configured devices',
+        link="plugins:netbox_routeros:configureddevice_list",
+        link_text="Configured devices",
         buttons=(
-            PluginMenuButton('plugins:netbox_routeros:configureddevice_add', 'Add', 'mdi mdi-plus-thick', ButtonColorChoices.GREEN),
-        )
+            PluginMenuButton(
+                "plugins:netbox_routeros:configureddevice_add",
+                "Add",
+                "mdi mdi-plus-thick",
+                ButtonColorChoices.GREEN,
+            ),
+        ),
     ),
     PluginMenuItem(
-        link='plugins:netbox_routeros:configurationtemplate_list',
-        link_text='Configuration templates',
+        link="plugins:netbox_routeros:configurationtemplate_list",
+        link_text="Configuration templates",
         buttons=(
-            PluginMenuButton('plugins:netbox_routeros:configurationtemplate_add', 'Add', 'mdi mdi-plus-thick', ButtonColorChoices.GREEN),
-        )
+            PluginMenuButton(
+                "plugins:netbox_routeros:configurationtemplate_add",
+                "Add",
+                "mdi mdi-plus-thick",
+                ButtonColorChoices.GREEN,
+            ),
+        ),
     ),
 )

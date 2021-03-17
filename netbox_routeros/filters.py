@@ -4,9 +4,7 @@ from utilities.filters import BaseFilterSet, NameSlugSearchFilterSet
 
 
 class ConfiguredDeviceFilterSet(
-    BaseFilterSet,
-    TenancyFilterSet,
-    NameSlugSearchFilterSet
+    BaseFilterSet, TenancyFilterSet, NameSlugSearchFilterSet
 ):
     class Meta:
         # TODO: Include device fields
@@ -20,13 +18,8 @@ class ConfiguredDeviceFilterSet(
 
 
 class ConfigurationTemplateFilterSet(
-    BaseFilterSet,
-    TenancyFilterSet,
-    NameSlugSearchFilterSet
+    BaseFilterSet, TenancyFilterSet, NameSlugSearchFilterSet
 ):
     class Meta:
         model = ConfigurationTemplate
-        fields = ['id', 'name', 'slug']
-
-
-
+        fields = ["id", "name", "slug"]

@@ -15,17 +15,21 @@ def get_napalm_driver(device: "Device"):
         import napalm
         from napalm.base.exceptions import ModuleImportError
     except ModuleNotFoundError as e:
-        if getattr(e, 'name') == 'napalm':
-            raise ServiceUnavailable("NAPALM is not installed. Please see the documentation for instructions.")
+        if getattr(e, "name") == "napalm":
+            raise ServiceUnavailable(
+                "NAPALM is not installed. Please see the documentation for instructions."
+            )
         raise e
 
     # Validate the configured driver
     try:
         driver = napalm.get_network_driver(device.platform.napalm_driver)
     except ModuleImportError:
-        raise ServiceUnavailable("NAPALM driver for platform {} not found: {}.".format(
-            device.platform, device.platform.napalm_driver
-        ))
+        raise ServiceUnavailable(
+            "NAPALM driver for platform {} not found: {}.".format(
+                device.platform, device.platform.napalm_driver
+            )
+        )
 
     host = str(device.primary_ip.address.ip)
     username = settings.NAPALM_USERNAME
@@ -40,10 +44,12 @@ def get_napalm_driver(device: "Device"):
         username=username,
         password=password,
         timeout=settings.NAPALM_TIMEOUT,
-        optional_args=optional_args
+        optional_args=optional_args,
     )
     try:
         d.open()
     except Exception as e:
-        raise ServiceUnavailable("Error connecting to the device at {}: {}".format(host, e))
+        raise ServiceUnavailable(
+            "Error connecting to the device at {}: {}".format(host, e)
+        )
     return d

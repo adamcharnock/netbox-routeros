@@ -5,6 +5,7 @@ class TagColumn(tables.TemplateColumn):
     """
     Display a list of tags assigned to the object.
     """
+
     template_code = """
     {% for tag in value.all %}
         {% include 'utilities/templatetags/tag.html' %}
@@ -16,6 +17,6 @@ class TagColumn(tables.TemplateColumn):
     def __init__(self, url_name=None, **kwargs):
         super().__init__(
             template_code=self.template_code,
-            extra_context={'url_name': url_name},
+            extra_context={"url_name": url_name},
             **kwargs
         )

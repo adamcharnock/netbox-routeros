@@ -7,14 +7,16 @@ import taggit.managers
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('extras', '0053_rename_webhook_obj_type'),
-        ('netbox_routeros', '0001_initial'),
+        ("extras", "0053_rename_webhook_obj_type"),
+        ("netbox_routeros", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='configurationtemplate',
-            name='tags',
-            field=taggit.managers.TaggableManager(through='extras.TaggedItem', to='extras.Tag'),
+            model_name="configurationtemplate",
+            name="tags",
+            field=taggit.managers.TaggableManager(
+                through="extras.TaggedItem", to="extras.Tag"
+            ),
         ),
     ]

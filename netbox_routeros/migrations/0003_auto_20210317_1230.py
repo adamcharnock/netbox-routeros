@@ -7,32 +7,63 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('dcim', '0122_standardize_name_length'),
-        ('tenancy', '0011_standardize_name_length'),
-        ('netbox_routeros', '0002_configurationtemplate_tags'),
+        ("dcim", "0122_standardize_name_length"),
+        ("tenancy", "0011_standardize_name_length"),
+        ("netbox_routeros", "0002_configurationtemplate_tags"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='configurationtemplate',
-            options={'ordering': ['name']},
+            name="configurationtemplate", options={"ordering": ["name"]},
         ),
         migrations.CreateModel(
-            name='ConfiguredDevice',
+            name="ConfiguredDevice",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False)),
-                ('created', models.DateField(auto_now_add=True, null=True)),
-                ('last_updated', models.DateTimeField(auto_now=True, null=True)),
-                ('last_config_fetched', models.TextField(blank=True, default='')),
-                ('last_config_fetched_at', models.DateTimeField(blank=True, default=None, null=True)),
-                ('last_config_pushed', models.TextField(blank=True, default='')),
-                ('last_config_pushed_at', models.DateTimeField(blank=True, default=None, null=True)),
-                ('configuration_template', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='configured_devices', to='netbox_routeros.configurationtemplate')),
-                ('device', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='routeros_configured_devices', to='dcim.device')),
-                ('tenant', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='routeros_configured_devices', to='tenancy.tenant')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True, primary_key=True, serialize=False
+                    ),
+                ),
+                ("created", models.DateField(auto_now_add=True, null=True)),
+                ("last_updated", models.DateTimeField(auto_now=True, null=True)),
+                ("last_config_fetched", models.TextField(blank=True, default="")),
+                (
+                    "last_config_fetched_at",
+                    models.DateTimeField(blank=True, default=None, null=True),
+                ),
+                ("last_config_pushed", models.TextField(blank=True, default="")),
+                (
+                    "last_config_pushed_at",
+                    models.DateTimeField(blank=True, default=None, null=True),
+                ),
+                (
+                    "configuration_template",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="configured_devices",
+                        to="netbox_routeros.configurationtemplate",
+                    ),
+                ),
+                (
+                    "device",
+                    models.OneToOneField(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="routeros_configured_devices",
+                        to="dcim.device",
+                    ),
+                ),
+                (
+                    "tenant",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="routeros_configured_devices",
+                        to="tenancy.tenant",
+                    ),
+                ),
             ],
-            options={
-                'ordering': ['device__name'],
-            },
+            options={"ordering": ["device__name"],},
         ),
     ]
