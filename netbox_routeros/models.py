@@ -29,7 +29,11 @@ class ConfiguredDevice(ChangeLoggedModel):
     extra_configuration = models.TextField(
         default="",
         blank=True,
-        help_text="Extra configuration to include in addition to the config template",
+        help_text=(
+            "Extra configuration to include in addition to the config template. "
+            "You can use the Jinja2 template syntax, and you have access to all "
+            "of the device's template context."
+        ),
     )
 
     tenant = models.ForeignKey(

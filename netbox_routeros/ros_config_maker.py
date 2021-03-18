@@ -69,14 +69,19 @@ def render_ros_config(
     overrides = {}
     if template_name and template_content:
         overrides[template_name] = template_content
+    if extra_config:
+        overrides["_extra_config"] = extra_config
 
     env = Environment(loader=RosTemplateLoader(overrides),)
     template = env.get_template(template_name)
+    context = make_ros_config_context(device)
 
-    config = template.render(**make_ros_config_context(device))
+    config = template.render(**context)
 
     if extra_config:
-        config += f"\n{extra_config}"
+        template = env.get_template("_extra_config")
+        rendered_extra_config = template.render(**context)
+        config += f"\n{rendered_extra_config}"
 
     return config
 
