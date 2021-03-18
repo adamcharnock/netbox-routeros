@@ -45,13 +45,13 @@ class ConfiguredDevice(ChangeLoggedModel):
         blank=True,
         verbose_name="The last config which was fetched from the device",
     )
-    last_config_fetched_at = models.DateTimeField(default=None, null=True, blank=True)
-
-    last_config_pushed = models.TextField(
+    last_verbose_config_fetched = models.TextField(
         default="",
         blank=True,
-        verbose_name="The last config which was pushed to the device",
+        verbose_name="The last config which was fetched from the device (the verbose version)",
     )
+    last_config_fetched_at = models.DateTimeField(default=None, null=True, blank=True)
+
     last_config_pushed_at = models.DateTimeField(default=None, null=True, blank=True)
 
     objects = RestrictedQuerySet.as_manager()
@@ -80,9 +80,9 @@ class ConfiguredDevice(ChangeLoggedModel):
         else:
             return None
 
-    def parse_last_config_pushed(self) -> Optional[RouterOSConfig]:
-        if self.last_config_pushed:
-            return RouterOSConfig.parse(self.last_config_pushed)
+    def parse_last_verbose_config_fetched(self) -> Optional[RouterOSConfig]:
+        if self.last_verbose_config_fetched:
+            return RouterOSConfig.parse(self.last_verbose_config_fetched)
         else:
             return None
 
@@ -90,7 +90,10 @@ class ConfiguredDevice(ChangeLoggedModel):
         old = self.parse_last_config_fetched()
         if not old:
             return
-        return self.generate_config().diff(self.parse_last_config_fetched())
+        return self.generate_config().diff(
+            old=self.parse_last_config_fetched(),
+            old_verbose=self.parse_last_verbose_config_fetched(),
+        )
 
     @cached_property
     def problems(self):
@@ -129,10 +132,12 @@ class ConfiguredDevice(ChangeLoggedModel):
 
     def fetch_config(self):
         driver = get_napalm_driver(self.device)
-        config = driver.get_config(retrieve="running", full=True, sanitized=False)[
-            "running"
-        ]
-        self.last_config_fetched = config
+        self.last_config_fetched = driver.get_config(
+            retrieve="running", full=False, sanitized=False
+        )["running"]
+        self.last_verbose_config_fetched = driver.get_config(
+            retrieve="running", full=True, sanitized=False
+        )["running"]
         self.last_config_fetched_at = now()
         self.save()
 

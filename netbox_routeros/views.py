@@ -92,13 +92,13 @@ class ConfiguredDeviceView(generic.ObjectView):
 
     def get_extra_context(self, request, instance: ConfiguredDevice):
         config_generated, error = make_config_for_display(configured_device=instance,)
-        config_latest = RouterOSConfig.parse(instance.last_config_fetched)
 
+        diff = instance.generate_diff()
         return {
             **get_template_context(instance.device),
             "config_generated": error or config_generated.__html__(),
-            "config_latest": config_latest.__html__(),
-            "config_diff": config_generated.diff(config_latest).__html__(),
+            "config_latest": instance.parse_last_config_fetched().__html__(),
+            "config_diff": diff.__html__() if diff.sections else None,
         }
 
 

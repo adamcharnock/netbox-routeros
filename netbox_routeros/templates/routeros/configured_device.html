@@ -125,7 +125,9 @@
                                       <ul class="nav nav-tabs" role="tablist">
                                           <li role="presentation" class="active"><a href="#tab-generated" aria-controls="tab-generated" role="tab" data-toggle="tab">Generated</a></li>
                                           <li role="presentation"><a href="#tab-current" aria-controls="tab-current" role="tab" data-toggle="tab">Current</a></li>
-                                          <li role="presentation"><a href="#tab-diff" aria-controls="tab-diff" role="tab" data-toggle="tab">Diff to apply</a></li>
+                                          <li role="presentation"><a href="#tab-diff" aria-controls="tab-diff" role="tab" data-toggle="tab">
+                                              {% if config_diff %}Diff to apply{% else %}Up to date 🎉{% endif %}
+                                          </a></li>
                                       </ul>
 
                                       <!-- Tab panes -->
@@ -137,7 +139,13 @@
                                               {{ config_latest|safe }}
                                           </div>
                                           <div role="tabpanel" class="tab-pane" id="tab-diff">
-                                              {{ config_diff|safe }}
+                                              {% if config_diff %}
+                                                {{ config_diff|safe }}
+                                              {% else %}
+                                                  <div class="alert alert-success text-center" role="alert">
+                                                      🎉 Your router is up to date, there is no diff to apply! 🎉
+                                                  </div>
+                                              {% endif %}
                                           </div>
                                       </div>
                                   </div>
