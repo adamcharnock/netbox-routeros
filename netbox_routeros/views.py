@@ -9,7 +9,7 @@ from django.views import View
 from jinja2 import TemplateError
 
 from dcim.models import Device
-from gn.gnms.ros_conf.ros_parser import RouterOSConfig
+from routeros_diff import RouterOSConfig
 from netbox.views import generic
 from netbox_routeros.models import ConfigurationTemplate, ConfiguredDevice
 from pprint import pformat
@@ -170,7 +170,7 @@ def make_config_for_display(
         config = render_ros_config(
             device, template_name, template_content, extra_config
         )
-    except TemplateError as e:
+    except Exception:
         error = traceback.format_exc()
     else:
         if parse:

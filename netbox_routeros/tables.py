@@ -37,6 +37,7 @@ class ConfiguredDeviceTable(BaseTable):
         fields = (
             "pk",
             "name",
+            "configuration_template",
             "primary_ip4",
             "primary_ip6",
             "tags",
@@ -46,7 +47,7 @@ class ConfiguredDeviceTable(BaseTable):
         )
         default_columns = (
             "name",
-            "slug",
+            "configuration_template",
             "primary_ip4",
             "primary_ip6",
             "tags",
