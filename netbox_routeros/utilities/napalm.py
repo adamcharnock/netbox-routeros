@@ -46,10 +46,8 @@ def get_napalm_driver(device: "Device"):
         timeout=settings.NAPALM_TIMEOUT,
         optional_args=optional_args,
     )
-    try:
-        d.open()
-    except Exception as e:
-        raise ServiceUnavailable(
-            "Error connecting to the device at {}: {}".format(host, e)
-        )
+
+    # Note that we don't open the connection as
+    # we do not require API access
+
     return d

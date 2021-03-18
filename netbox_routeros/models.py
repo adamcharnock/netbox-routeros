@@ -1,12 +1,16 @@
+from typing import Optional
+
 import napalm
 from django.db import models
 from django.utils.functional import cached_property
 from django.utils.timezone import now
 from napalm.base import ModuleImportError
+from routeros_diff import RouterOSConfig
 from taggit.managers import TaggableManager
 
 from extras.models import ChangeLoggedModel, TaggedItem
 from netbox.api.exceptions import ServiceUnavailable
+from netbox_routeros.ros_config_maker import render_ros_config
 from netbox_routeros.utilities.napalm import get_napalm_driver
 from utilities.querysets import RestrictedQuerySet
 
@@ -61,6 +65,33 @@ class ConfiguredDevice(ChangeLoggedModel):
         else:
             return "New configured device"
 
+    def generate_config(self) -> RouterOSConfig:
+        config = render_ros_config(
+            self.device,
+            template_name=self.configuration_template.slug,
+            template_content=self.configuration_template.content,
+            extra_config=self.extra_configuration,
+        )
+        return RouterOSConfig.parse(config)
+
+    def parse_last_config_fetched(self) -> Optional[RouterOSConfig]:
+        if self.last_config_fetched:
+            return RouterOSConfig.parse(self.last_config_fetched)
+        else:
+            return None
+
+    def parse_last_config_pushed(self) -> Optional[RouterOSConfig]:
+        if self.last_config_pushed:
+            return RouterOSConfig.parse(self.last_config_pushed)
+        else:
+            return None
+
+    def generate_diff(self) -> Optional[RouterOSConfig]:
+        old = self.parse_last_config_fetched()
+        if not old:
+            return
+        return self.generate_config().diff(self.parse_last_config_fetched())
+
     @cached_property
     def problems(self):
         """There are a bunch of things that may cause issues. Let's check for them
@@ -97,13 +128,22 @@ class ConfiguredDevice(ChangeLoggedModel):
         return problems
 
     def fetch_config(self):
-        # Validate the configured driver
         driver = get_napalm_driver(self.device)
         config = driver.get_config(retrieve="running", full=True, sanitized=False)[
             "running"
         ]
         self.last_config_fetched = config
         self.last_config_fetched_at = now()
+        self.save()
+
+    def push_config(self):
+        driver = get_napalm_driver(self.device)
+        driver.load_replace_candidate(
+            config=self.generate_config(),
+            current_config=self.parse_last_config_fetched(),
+        )
+        self.last_config_pushed_at = now()
+        self.fetch_config()
         self.save()
 
 

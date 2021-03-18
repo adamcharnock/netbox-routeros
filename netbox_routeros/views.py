@@ -1,5 +1,6 @@
 import traceback
 from inspect import isclass
+from typing import Optional, Tuple
 
 from django.contrib import messages
 from django.db.models import Model
@@ -7,6 +8,7 @@ from django.http import HttpResponseRedirect, HttpResponseForbidden
 from django.shortcuts import render
 from django.views import View
 from jinja2 import TemplateError
+from napalm.base.exceptions import CommandErrorException
 
 from dcim.models import Device
 from routeros_diff import RouterOSConfig
@@ -45,7 +47,6 @@ class PullConfigView(GetReturnURLMixin, View):
         # Verify user permission
         if not request.user.has_perm("dcim.napalm_write_device"):
             return HttpResponseForbidden()
-        pass
 
         pks = request.POST.getlist("pk")
         objs = ConfiguredDevice.objects.filter(pk__in=pks)
@@ -57,17 +58,40 @@ class PullConfigView(GetReturnURLMixin, View):
         return HttpResponseRedirect(self.get_return_url(request))
 
 
+class PushConfigView(GetReturnURLMixin, View):
+    def post(self, request):
+        # Verify user permission
+        if not request.user.has_perm("dcim.napalm_write_device"):
+            return HttpResponseForbidden()
+
+        pks = request.POST.getlist("pk")
+        objs = ConfiguredDevice.objects.filter(pk__in=pks)
+
+        successes = 0
+        for configured_device in objs:
+            if not configured_device.problems:
+                try:
+                    configured_device.push_config()
+                except CommandErrorException as e:
+                    messages.error(request, str(e))
+                else:
+                    successes += 1
+
+        message = f"Pushed {successes} device configuration(s)"
+        if successes:
+            messages.success(request, message)
+        else:
+            messages.warning(request, message)
+
+        return HttpResponseRedirect(self.get_return_url(request))
+
+
 class ConfiguredDeviceView(generic.ObjectView):
     queryset = ConfiguredDevice.objects.all()
     template_name = "routeros/configured_device.html"
 
     def get_extra_context(self, request, instance: ConfiguredDevice):
-        config_generated, error = make_config_for_display(
-            device=instance.device,
-            template_name=instance.configuration_template.slug,
-            extra_config=instance.extra_configuration,
-            parse=True,
-        )
+        config_generated, error = make_config_for_display(configured_device=instance,)
         config_latest = RouterOSConfig.parse(instance.last_config_fetched)
 
         return {
@@ -105,13 +129,18 @@ class ConfigurationTemplateEditView(generic.ObjectEditView):
     def render_preview(self, request, *args, **kwargs):
         obj = self.alter_obj(self.get_object(kwargs), request, args, kwargs)
         form = self.model_form(data=request.POST, files=request.FILES, instance=obj)
+
         if not form.is_valid():
             return super().post(request, *args, **kwargs)
 
-        config_preview, error = make_config_for_display(
+        form.instance.content = form.cleaned_data["content"]
+        temporary_configured_device = ConfiguredDevice(
             device=form.cleaned_data["preview_for_device"],
-            template_name=obj.slug,
-            template_content=form.cleaned_data["content"],
+            configuration_template=form.instance,
+        )
+
+        config_preview, error = make_config_for_display(
+            configured_device=temporary_configured_device,
         )
 
         return render(
@@ -122,7 +151,7 @@ class ConfigurationTemplateEditView(generic.ObjectEditView):
                 "obj_type": self.queryset.model._meta.verbose_name,
                 "form": form,
                 "return_url": self.get_return_url(request, obj),
-                "config_preview": config_preview or error,
+                "config_preview": str(config_preview) or error,
             },
         )
 
@@ -154,12 +183,8 @@ def get_template_context(device: Device):
 
 
 def make_config_for_display(
-    device: Device,
-    template_name: str,
-    template_content: str = "",
-    extra_config: str = "",
-    parse=False,
-):
+    configured_device: ConfiguredDevice,
+) -> Tuple[Optional[RouterOSConfig], Optional[str]]:
     """Render a config for display to a user
 
     Adds some niceties around error rendering
@@ -167,13 +192,8 @@ def make_config_for_display(
     error = None
     config = None
     try:
-        config = render_ros_config(
-            device, template_name, template_content, extra_config
-        )
+        config = configured_device.generate_config()
     except Exception:
         error = traceback.format_exc()
-    else:
-        if parse:
-            config = RouterOSConfig.parse(config)
 
     return config, error

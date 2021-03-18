@@ -48,6 +48,11 @@ urlpatterns = [
         views.PullConfigView.as_view(),
         name="configureddevice_pull_config",
     ),
+    path(
+        "configured-device/push/",
+        views.PushConfigView.as_view(),
+        name="configureddevice_push_config",
+    ),
     # Configuration templates
     path(
         "configuration-templates/",

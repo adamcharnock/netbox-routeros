@@ -20,7 +20,6 @@ import netaddr
 from dcim.models import Device, Interface
 from ipam.fields import IPAddressField
 from ipam.models import IPAddress, VLAN, Q, Prefix
-from netbox_routeros.models import ConfigurationTemplate
 from utilities.utils import deepmerge
 
 
@@ -33,6 +32,8 @@ class RosTemplateLoader(BaseLoader):
         self.overrides = overrides or {}
 
     def get_source(self, environment, template):
+        from netbox_routeros.models import ConfigurationTemplate
+
         # TODO: Does not support tenants
         if template in self.overrides:
             return (
@@ -54,6 +55,8 @@ class RosTemplateLoader(BaseLoader):
             )
 
     def list_templates(self):
+        from netbox_routeros.models import ConfigurationTemplate
+
         return ConfigurationTemplate.objects.all().values_list("slug", flat=True)
 
 
