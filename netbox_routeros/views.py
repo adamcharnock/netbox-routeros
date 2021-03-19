@@ -7,7 +7,7 @@ from django.db.models import Model
 from django.http import HttpResponseRedirect, HttpResponseForbidden
 from django.shortcuts import render
 from django.views import View
-from jinja2 import TemplateError
+from jinja2 import TemplateError, TemplateNotFound
 from napalm.base.exceptions import CommandErrorException
 
 from dcim.models import Device
@@ -91,7 +91,12 @@ class ConfiguredDeviceView(generic.ObjectView):
     template_name = "routeros/configured_device.html"
 
     def get_extra_context(self, request, instance: ConfiguredDevice):
-        config_generated, error = make_config_for_display(configured_device=instance,)
+        config_generated, error = render_configured_device_config_for_display(
+            configured_device=instance,
+        )
+        bootstrap_config, bootstrap_error = render_bootstrap_for_display(
+            device=instance.device
+        )
 
         diff = instance.generate_diff()
         return {
@@ -99,6 +104,7 @@ class ConfiguredDeviceView(generic.ObjectView):
             "config_generated": error or config_generated.__html__(),
             "config_latest": instance.parse_last_config_fetched().__html__(),
             "config_diff": diff.__html__() if diff.sections else None,
+            "config_bootstrap": bootstrap_config or bootstrap_error,
         }
 
 
@@ -139,7 +145,7 @@ class ConfigurationTemplateEditView(generic.ObjectEditView):
             configuration_template=form.instance,
         )
 
-        config_preview, error = make_config_for_display(
+        config_preview, error = render_configured_device_config_for_display(
             configured_device=temporary_configured_device,
         )
 
@@ -151,7 +157,7 @@ class ConfigurationTemplateEditView(generic.ObjectEditView):
                 "obj_type": self.queryset.model._meta.verbose_name,
                 "form": form,
                 "return_url": self.get_return_url(request, obj),
-                "config_preview": str(config_preview) or error,
+                "config_preview": str(config_preview) if config_preview else error,
             },
         )
 
@@ -182,7 +188,7 @@ def get_template_context(device: Device):
     }
 
 
-def make_config_for_display(
+def render_configured_device_config_for_display(
     configured_device: ConfiguredDevice,
 ) -> Tuple[Optional[RouterOSConfig], Optional[str]]:
     """Render a config for display to a user
@@ -193,6 +199,22 @@ def make_config_for_display(
     config = None
     try:
         config = configured_device.generate_config()
+    except Exception:
+        error = traceback.format_exc()
+
+    return config, error
+
+
+def render_bootstrap_for_display(
+    device: Device,
+) -> Tuple[Optional[str], Optional[str]]:
+    error = None
+    config = None
+    try:
+        config = render_ros_config(device=device, template_name="bootstrap")
+    except TemplateNotFound:
+        # Just return None
+        pass
     except Exception:
         error = traceback.format_exc()
 

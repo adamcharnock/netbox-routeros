@@ -144,6 +144,7 @@ def get_template_functions(device):
         get_prefix=get_prefix,
         combine_prefixes=combine_prefixes,
         get_interface=partial(get_interface, device),
+        get_address=get_address,
         orm_or=orm_or,
     )
 
@@ -234,6 +235,17 @@ def get_prefix(ip_address):
         .order_by("prefix__net_mask_length")
         .last()
     )
+
+
+def get_address(device: Device, interface: Union[Interface, VLAN]):
+    if isinstance(interface, Interface):
+        return interface.ip_addresses.first()
+    else:
+        vlan_prefixes = [str(p.prefix) for p in interface.prefixes.all()]
+        vlan_prefixes = Cast(vlan_prefixes, output_field=ArrayField(IPAddressField()))
+        return IPAddress.objects.filter(
+            interface__device=device, address__net_contained_or_equal=Any(vlan_prefixes)
+        ).first()
 
 
 def orm_or(**filters):

@@ -132,6 +132,7 @@
                                   </div>
                                   <div class="panel-body rendered-markdown">
                                       <ul class="nav nav-tabs" role="tablist">
+                                          <li role="presentation"><a href="#tab-bootstrap" aria-controls="tab-bootstrap" role="tab" data-toggle="tab">Bootstrap</a></li>
                                           <li role="presentation" class="active"><a href="#tab-generated" aria-controls="tab-generated" role="tab" data-toggle="tab">Generated</a></li>
                                           <li role="presentation"><a href="#tab-current" aria-controls="tab-current" role="tab" data-toggle="tab">Current</a></li>
                                           <li role="presentation"><a href="#tab-diff" aria-controls="tab-diff" role="tab" data-toggle="tab">
@@ -141,6 +142,26 @@
 
                                       <!-- Tab panes -->
                                       <div class="tab-content">
+                                          <div role="tabpanel" class="tab-pane" id="tab-bootstrap">
+                                              <p>
+                                                  The bootstrap configuration is the initial configuration which must be
+                                                  run on new routers. This should be as minimal as possible, and its sole
+                                                  purpose is to make the router accessible to Netbox.
+                                              </p>
+                                              <hr>
+                                              {% if config_bootstrap %}
+                                                  <pre>{{ config_bootstrap }}</pre>
+                                                  <p class="text-muted">
+                                                      This can be changed by editing the configuration template with
+                                                      the slug of 'bootstrap'
+                                                  </p>
+                                              {% else %}
+                                                  <p class="text-muted text-center">
+                                                      No bootstrap config created.
+                                                      Create a configuration template with the slug 'bootstrap'
+                                                  </p>
+                                              {% endif %}
+                                          </div>
                                           <div role="tabpanel" class="tab-pane active" id="tab-generated" style="margin-top:-2rem">
                                               {{ config_generated|safe }}
                                           </div>
