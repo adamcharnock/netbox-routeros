@@ -1,4 +1,15 @@
+# Netbox plugin for auto-configuring Mikrotik RouterOS devices
 
+Features:
+
+* Templating config using Jinja2
+* Built-in functions to assist in templating
+* Full access to Netbox's underlying Django models
+* Will SSH into RouterOS devices to apply configuration updates
+* Smart diffing – Applies only the necessary commands to modify your device's configuraiton. No restart required
+* View current device configuration, the generated templated configuration, and the diff to be applied
+* Manage and edit configuration templates within Netbox
+* Bulk apply changes to multiple devices
 
 ## Release process
 
