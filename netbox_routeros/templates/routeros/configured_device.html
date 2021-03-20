@@ -25,13 +25,15 @@
                     </button>
                 </form>
 
-                <form action="" method="post" style="display: inline-block;" onsubmit="return confirm('Push config to device?');" >
-                    {% csrf_token %}
-                    <input type="hidden" name="pk" value="{{ object.pk }}">
-                    <button type="submit" class="btn btn-warning" formaction="{% url 'plugins:netbox_routeros:configureddevice_push_config' %}?return_url={% url 'plugins:netbox_routeros:configureddevice' pk=object.pk %}">
-                        <span class="mdi mdi-upload" aria-hidden="true"></span> Push config
-                    </button>
-                    </form>
+                {% if object.last_config_fetched %}
+                    <form action="" method="post" style="display: inline-block;" onsubmit="return confirm('Push config to device?');" >
+                        {% csrf_token %}
+                        <input type="hidden" name="pk" value="{{ object.pk }}">
+                        <button type="submit" class="btn btn-warning" formaction="{% url 'plugins:netbox_routeros:configureddevice_push_config' %}?return_url={% url 'plugins:netbox_routeros:configureddevice' pk=object.pk %}">
+                            <span class="mdi mdi-upload" aria-hidden="true"></span> Push config
+                        </button>
+                        </form>
+                    {% endif %}
                 {% endif %}
 
             {% endif %}
@@ -136,7 +138,7 @@
                                           <li role="presentation" class="active"><a href="#tab-generated" aria-controls="tab-generated" role="tab" data-toggle="tab">Generated</a></li>
                                           <li role="presentation"><a href="#tab-current" aria-controls="tab-current" role="tab" data-toggle="tab">Current</a></li>
                                           <li role="presentation"><a href="#tab-diff" aria-controls="tab-diff" role="tab" data-toggle="tab">
-                                              {% if config_diff %}Diff to apply{% else %}Up to date 🎉{% endif %}
+                                              {% if config_diff or not object.last_config_fetched %}Diff to apply{% else %}Up to date 🎉{% endif %}
                                           </a></li>
                                       </ul>
 
@@ -169,8 +171,13 @@
                                               {{ config_latest|safe }}
                                           </div>
                                           <div role="tabpanel" class="tab-pane" id="tab-diff">
-                                              {% if config_diff %}
-                                                {{ config_diff|safe }}
+                                              {% if not object.last_config_fetched %}
+                                                  <div class="alert alert-warning text-center" role="alert">
+                                                      No config has been fetched for this device. A diff
+                                                      will become available once you fetch the device's configuration.
+                                                  </div>
+                                              {% elif config_diff %}
+                                                  {{ config_diff|safe }}
                                               {% else %}
                                                   <div class="alert alert-success text-center" role="alert">
                                                       🎉 Your router is up to date, there is no diff to apply! 🎉

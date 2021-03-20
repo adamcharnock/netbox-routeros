@@ -102,12 +102,12 @@ class ConfiguredDeviceView(generic.ObjectView):
         return {
             **get_template_context(instance.device),
             "config_generated": config_generated.__html__()
-            if config_generated
+            if config_generated and config_generated.sections
             else error,
             "config_latest": instance.parse_last_config_fetched().__html__()
             if instance.last_config_fetched
             else None,
-            "config_diff": diff.__html__() if diff else None,
+            "config_diff": diff.__html__() if diff and diff.sections else None,
             "config_bootstrap": bootstrap_config or bootstrap_error,
         }
 
