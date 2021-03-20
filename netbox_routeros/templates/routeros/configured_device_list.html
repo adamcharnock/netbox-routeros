@@ -7,8 +7,8 @@
 {% endblock %}
 {% block bulk_buttons %}
     {{ block.super }}
-    <button type="submit" name="_edit" formaction="{% url 'plugins:netbox_routeros:configureddevice_pull_config' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" class="btn btn-success btn-sm">
-        <span class="mdi mdi-download" aria-hidden="true"></span> Fetch config
+    <button type="submit" name="_edit" formaction="{% url 'plugins:netbox_routeros:configureddevice_pull_config' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" class="btn btn-primary btn-sm">
+        <span class="mdi mdi-download" aria-hidden="true"></span> Pull config
     </button>
     <button type="submit" name="_edit" formaction="{% url 'plugins:netbox_routeros:configureddevice_push_config' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" class="btn btn-warning btn-sm">
         <span class="mdi mdi-upload" aria-hidden="true"></span> Push config

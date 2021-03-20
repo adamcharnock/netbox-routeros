@@ -170,17 +170,22 @@
                                           <div role="tabpanel" class="tab-pane" id="tab-current" style="margin-top:-2rem">
                                               {{ config_latest|safe }}
                                           </div>
-                                          <div role="tabpanel" class="tab-pane" id="tab-diff">
                                               {% if not object.last_config_fetched %}
-                                                  <div class="alert alert-warning text-center" role="alert">
-                                                      No config has been fetched for this device. A diff
-                                                      will become available once you fetch the device's configuration.
+                                                  <div role="tabpanel" class="tab-pane" id="tab-diff">
+                                                      <div class="alert alert-warning text-center" role="alert">
+                                                          No config has been fetched for this device. A diff
+                                                          will become available once you fetch the device's configuration.
+                                                      </div>
                                                   </div>
                                               {% elif config_diff %}
-                                                  {{ config_diff|safe }}
+                                                  <div role="tabpanel" class="tab-pane" id="tab-diff" style="margin-top:-2rem">
+                                                      {{ config_diff|safe }}
+                                                  </div>
                                               {% else %}
-                                                  <div class="alert alert-success text-center" role="alert">
-                                                      🎉 Your router is up to date, there is no diff to apply! 🎉
+                                                  <div role="tabpanel" class="tab-pane" id="tab-diff">
+                                                      <div class="alert alert-success text-center" role="alert">
+                                                          🎉 Your router is up to date, there is no diff to apply! 🎉
+                                                      </div>
                                                   </div>
                                               {% endif %}
                                           </div>
