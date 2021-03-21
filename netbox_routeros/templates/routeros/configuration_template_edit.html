@@ -19,7 +19,7 @@
 
 {% block form %}
     <div class="row">
-        <div class="col-md-6">
+        <div class="col-md-6 col-md-offset-3">
             <div class="panel panel-default">
                 <div class="panel-heading"><strong>Configuration Template</strong></div>
                 <div class="panel-body">
@@ -43,21 +43,26 @@
                     {% render_field form.tags %}
                 </div>
             </div>
+
+        </div>
+
+    </div>
+
+    <div class="row">
+        <div class="col-sm-12">
             <div class="panel panel-default">
                 <div class="panel-heading"><strong>Template content</strong></div>
                 <div class="panel-body">
                     {% render_field form.content %}
                 </div>
             </div>
-        </div>
 
-        <div class="col-md-6">
             <div class="panel panel-default">
                 <div class="panel-heading"><strong>Preview configuration</strong></div>
                 <div class="panel-body">
                     {% render_field form.preview_for_device %}
                     {% if config_preview %}
-                        <div class="alert alert-danger" role="alert">
+                        <div class="alert alert-warning" role="alert">
                             <strong>You have unsaved changes.</strong> Ensure you save your changes once you
                             are satisfied with your preview.
                         </div>
@@ -73,7 +78,7 @@
 
 {% block buttons %}
 <div class="row">
-    <div class="col-md-6">
+    <div class="col-sm-12">
         {{ block.super }}
     </div>
 </div>

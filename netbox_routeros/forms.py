@@ -38,7 +38,8 @@ class ConfigurationTemplateForm(BootstrapMixin, TenancyForm, forms.ModelForm):
     slug = SlugField()
     tags = DynamicModelMultipleChoiceField(queryset=Tag.objects.all(), required=False)
     content = forms.CharField(
-        widget=forms.Textarea(attrs=dict(placeholder=TEMPLATE_PLACEHOLDER)), label=""
+        widget=forms.Textarea(attrs=dict(placeholder=TEMPLATE_PLACEHOLDER, rows=20)),
+        label="",
     )
     preview_for_device = DynamicModelChoiceField(
         queryset=Device.objects.all(), display_field="display_name", required=False,
