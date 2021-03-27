@@ -180,9 +180,19 @@
                                              style="margin-top:-2rem">
                                             {{ config_generated|safe }}
                                         </div>
-                                        <div role="tabpanel" class="tab-pane" id="tab-current" style="margin-top:-2rem">
-                                            {{ config_latest|safe }}
-                                        </div>
+
+                                        {% if config_latest %}
+                                            <div role="tabpanel" class="tab-pane" id="tab-current" style="margin-top:-2rem">
+                                                {{ config_latest|safe }}
+                                            </div>
+                                        {% else %}
+                                            <div role="tabpanel" class="tab-pane" id="tab-current">
+                                                <div class="alert alert-warning text-center" role="alert">
+                                                    No config has been fetched for this device.
+                                                </div>
+                                            </div>
+                                        {% endif %}
+
                                         {% if not object.last_config_fetched %}
                                             <div role="tabpanel" class="tab-pane" id="tab-diff">
                                                 <div class="alert alert-warning text-center" role="alert">

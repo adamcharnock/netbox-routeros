@@ -98,17 +98,21 @@ class ConfiguredDeviceView(generic.ObjectView):
             device=instance.device
         )
 
-        diff = instance.generate_diff()
+        if not error:
+            diff = instance.generate_diff()
+        else:
+            diff = None
+
         return {
             **get_template_context(instance.device),
             "config_generated": config_generated.__html__()
             if config_generated and config_generated.sections
-            else error,
+            else f"<pre>{error}</pre>",
             "config_latest": instance.parse_last_config_fetched().__html__()
             if instance.last_config_fetched
             else None,
             "config_diff": diff.__html__() if diff and diff.sections else None,
-            "config_bootstrap": bootstrap_config or bootstrap_error,
+            "config_bootstrap": bootstrap_config or f"<pre>{bootstrap_error}</pre>",
         }
 
 
