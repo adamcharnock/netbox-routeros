@@ -14,6 +14,7 @@ import django.apps
 from django.contrib.postgres.fields import ArrayField
 from django.db.models import Func
 from django.db.models.functions import Cast
+from django.utils.module_loading import import_string
 from jinja2 import Environment, BaseLoader, TemplateNotFound
 import netaddr
 
@@ -146,6 +147,7 @@ def get_template_functions(device):
         get_interface=partial(get_interface, device),
         get_address=get_address,
         orm_or=orm_or,
+        run_python_function=run_python_function,
     )
 
 
@@ -253,3 +255,8 @@ def orm_or(**filters):
     for k, v in filters.items():
         query |= Q(**{k: v})
     return query
+
+
+def run_python_function(fn: str, *args, **kwargs):
+    fn = import_string(fn)
+    return fn(*args, **kwargs)
