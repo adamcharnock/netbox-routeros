@@ -113,13 +113,16 @@ def _context_ip_addresses(device: Device):
 
 
 def _context_vlans(device: Device):
-    # TODO: Test
-    return VLAN.objects.filter(prefixes__prefix__net_contains=_any_address(device))
+    return VLAN.objects.filter(
+        prefixes__prefix__net_contains=_any_address(device)
+    ).distinct()
 
 
 def _context_prefixes(device: Device):
     # TODO: Test
-    prefixes = Prefix.objects.filter(prefix__net_contains=_any_address(device))
+    prefixes = Prefix.objects.filter(
+        prefix__net_contains=_any_address(device)
+    ).distinct()
     return dict(
         prefixes=prefixes,
         prefixes_v4=prefixes.filter(prefix__family=4),
