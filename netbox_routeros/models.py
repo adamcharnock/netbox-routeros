@@ -65,7 +65,7 @@ class ConfiguredDevice(ChangeLoggedModel):
 
     def __str__(self):
         if self.device_id:
-            return self.device.name
+            return str(self.device)
         else:
             return "New configured device"
 
@@ -125,11 +125,19 @@ class ConfiguredDevice(ChangeLoggedModel):
             return problems
 
         # Validate the configured driver
+        if not self.device.platform:
+            problems.append("No platform configured for device")
+            return
+
+        if not self.device.platform.napalm_driver:
+            problems.append("Device's platform has no napalm driver set")
+            return
+
         try:
             napalm.get_network_driver(self.device.platform.napalm_driver)
         except ModuleImportError:
             problems.append(
-                "NAPALM driver for platform {self.device.platform} not found: {self.device.platform.napalm_driver}."
+                f"NAPALM driver for platform {self.device.platform} not found: {self.device.platform.napalm_driver}."
             )
 
         return problems
