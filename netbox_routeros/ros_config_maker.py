@@ -154,10 +154,10 @@ def get_template_functions(device):
     )
 
 
-def get_loopback(device: Device, number=1) -> Optional[IPAddress]:
-    qs = IPAddress.objects.filter(interface__device=device, role="loopback").order_by(
-        "address"
-    )
+def get_loopback(device: Device, number=1, **extra_filters) -> Optional[IPAddress]:
+    qs = IPAddress.objects.filter(
+        interface__device=device, role="loopback", **extra_filters
+    ).order_by("address")
     try:
         loopback = qs[number - 1 : number].get()
     except IPAddress.DoesNotExist:
@@ -234,22 +234,26 @@ def get_interface(
     )
 
 
-def get_prefix(ip_address):
+def get_prefix(ip_address, **extra_filters):
     return (
-        Prefix.objects.filter(prefix__net_contained_or_equal=str(ip_address))
+        Prefix.objects.filter(
+            prefix__net_contained_or_equal=str(ip_address), **extra_filters
+        )
         .order_by("prefix__net_mask_length")
         .last()
     )
 
 
-def get_address(device: Device, interface: Union[Interface, VLAN]):
+def get_address(device: Device, interface: Union[Interface, VLAN], **extra_filters):
     if isinstance(interface, Interface):
-        return interface.ip_addresses.first()
+        return interface.ip_addresses.filter(**extra_filters).first()
     else:
         vlan_prefixes = [str(p.prefix) for p in interface.prefixes.all()]
         vlan_prefixes = Cast(vlan_prefixes, output_field=ArrayField(IPAddressField()))
         return IPAddress.objects.filter(
-            interface__device=device, address__net_contained_or_equal=Any(vlan_prefixes)
+            interface__device=device,
+            address__net_contained_or_equal=Any(vlan_prefixes),
+            **extra_filters,
         ).first()
 
 
