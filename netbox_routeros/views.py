@@ -9,6 +9,7 @@ from django.shortcuts import render
 from django.views import View
 from jinja2 import TemplateError, TemplateNotFound
 from napalm.base.exceptions import CommandErrorException
+from paramiko import AuthenticationException
 
 from dcim.models import Device
 from routeros_diff import RouterOSConfig
@@ -52,7 +53,10 @@ class PullConfigView(GetReturnURLMixin, View):
         objs = ConfiguredDevice.objects.filter(pk__in=pks)
         for configured_device in objs:
             if not configured_device.problems:
-                configured_device.fetch_config()
+                try:
+                    configured_device.fetch_config()
+                except AuthenticationException as e:
+                    messages.error(request, str(e))
 
         messages.success(request, f"Fetched {len(pks)} device configurations")
         return HttpResponseRedirect(self.get_return_url(request))
