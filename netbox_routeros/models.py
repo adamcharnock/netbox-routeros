@@ -158,6 +158,7 @@ class ConfiguredDevice(ChangeLoggedModel):
         driver.load_replace_candidate(
             config=self.generate_config(),
             current_config=self.parse_last_config_fetched(),
+            current_config_verbose=self.parse_last_verbose_config_fetched(),
         )
         self.last_config_pushed_at = now()
         self.fetch_config()
